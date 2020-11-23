@@ -9,6 +9,7 @@ repository = "https://github.com/apimeister/qpid-proton-rs/"
 description = "Rust bindings for the Apache Qpid Proton C library."
 
 [dependencies]
+uuid = { version = "0.8", features = ["v4"] }
 
 [build-dependencies]
 cmake = "0.1"

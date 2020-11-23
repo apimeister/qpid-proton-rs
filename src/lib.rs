@@ -2,6 +2,7 @@ use c_binding::*;
 use std::os::raw::c_char;
 use std::ffi::CString;
 use std::ffi::CStr;
+use uuid::Uuid;
 
 pub mod c_binding;
 
@@ -14,6 +15,7 @@ pub struct Connection {
   connection: *mut c_binding::pn_connection_t,
   transport: *mut c_binding::pn_transport_t,
   link: *mut c_binding::pn_link_t,
+  proactor: *mut c_binding::pn_proactor_t,
 }
 
 pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: String) -> Option<Connection> {
@@ -79,10 +81,12 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
               transport: transport,
               connection: connection,
               link: l,
+              proactor: proactor,
             });
             should_continue = true;
           },
           pn_event_type_t::PN_LINK_FLOW => {
+            println!("PN_LINK_FLOW: link ready");
             should_continue = false;
           },
           _ => {
@@ -90,10 +94,11 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
           }
         }
       }
+      println!("pn_proactor_done");
+      pn_proactor_done(proactor, events);
       if !should_continue {
         break;
       }
-      pn_proactor_done(proactor, events);
     }
     
   }
@@ -104,7 +109,7 @@ pub fn send_message(connection: Connection, payload: String){
   unsafe{
     //check link credit
     if pn_link_credit(connection.link) > 0 {
-      let counter_string = CString::new(payload.clone()).unwrap();
+      let counter_string = CString::new(Uuid::new_v4().to_string()).unwrap();
       let dtag = pn_dtag(counter_string.as_ptr(), 1);
       pn_delivery(connection.link, dtag);
       let message = pn_message();
@@ -124,6 +129,43 @@ pub fn send_message(connection: Connection, payload: String){
       let result = pn_link_advance(connection.link);
       println!("pn_link_advance: {}",result);
       pn_message_clear(message);
+      wait_for(connection, pn_event_type_t::PN_DELIVERY);
+    }
+  }
+}
+
+fn wait_for(connection: Connection, target: pn_event_type_t){
+  unsafe{
+    loop {
+      let events = pn_proactor_wait(connection.proactor);
+      let mut should_continue = true;
+      loop {
+        let event = pn_event_batch_next(events);
+        if event.is_null() {
+          break
+        }
+        //handle single event
+        match pn_event_type(event) {
+          // target => {
+          //   println!("matched target {:?}",pn_event_type(event));
+          //   should_continue = false;
+          //   break;
+          // },
+          _ => {
+            if pn_event_type(event) == target {
+              println!("matched target {:?}",pn_event_type(event));
+              should_continue = false;
+              break;  
+            }else{
+              println!("{:?}",pn_event_type(event));
+            }
+          }
+        }
+      }
+      pn_proactor_done(connection.proactor, events);
+      if !should_continue {
+        break;
+      }
     }
   }
 }

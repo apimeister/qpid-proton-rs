@@ -133,7 +133,7 @@ pub struct pn_logger_t { pub _val: [u8; 0] }
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 #[repr(C)]
 pub enum pn_event_type_t{
   /**
