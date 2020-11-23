@@ -9,7 +9,7 @@ qpid_proton is licensed under Apache License, Version 2.0 (LICENSE-APACHE or htt
 
 # Build
 
-This is still exprimental and only partially working.
+This is still experimental and only partially working.
 
 
 ### run qpid a server
