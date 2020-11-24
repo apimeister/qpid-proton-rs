@@ -8,9 +8,7 @@ fn main() {
   unsafe{
     let message = pn_message();
     let proactor = pn_proactor();
-//Endpoint=sb://servicebus4infrastructurecore.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Hgg+bSZstkJIqhRpjixF+fSUjs+seRrsPvyMJFtrpuI=
-    let _addr = "localhost:5672";
-    let addr = "servicebus4infrastructurecore.servicebus.windows.net:5671";
+    let addr = "testservicebus12345.servicebus.windows.net:5671";
 
     //char * address = (char *) "amqps://{SAS Key Name}:{SAS key}@{namespace name}.servicebus.windows.net/{event hub name}";
     //char * msgtext = (char *) "Hello from C!";
@@ -26,11 +24,11 @@ fn main() {
     // let user = "admin";
     // let password = "admin";
     let user = "RootManageSharedAccessKey";
-    let password = "Hgg+bSZstkJIqhRpjixF+fSUjs+seRrsPvyMJFtrpuI=";
+    let password = "Hgg+bSZstkJIqhRpjixF+fSUj";
     // let password = "SGdnK2JTWnN0a0pJcWhScGppeEYrZlNVanMrc2VScnNQdnlNSkZ0cnB1ST0=";
     pn_connection_set_user(connection, CString::new(user).unwrap().as_ptr());
     pn_connection_set_password(connection, CString::new(password).unwrap().as_ptr());
-    pn_connection_set_hostname(connection, CString::new("servicebus4infrastructurecore.servicebus.windows.net").unwrap().as_ptr());
+    pn_connection_set_hostname(connection, CString::new("testservicebus12345.servicebus.windows.net").unwrap().as_ptr());
     let sasl = pn_sasl(transport);
     pn_sasl_set_allow_insecure_mechs(sasl, true);
     pn_sasl_allowed_mechs(sasl, CString::new("PLAIN").unwrap().as_ptr());
