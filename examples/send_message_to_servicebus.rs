@@ -1,18 +1,17 @@
-use qpid_proton::*;
 
 fn main() {
   let host = "testservicebus12345.servicebus.windows.net".to_string();
   let port = 5671;
-  let auth = SaslAuth{
+  let auth = qpid_proton::SaslAuth{
     username: "RootManageSharedAccessKey".to_string(),
     password: "Hgg+bSZstkJIqhRpjixF+fSUj".to_string()
   };
   let queue = "myqueue".to_string();
-  let connection = connect(host,port,Some(auth),queue);
+  let connection = qpid_proton::connect(host,port,Some(auth),queue);
 
   match connection {
     Some(connection) => {
-      send_message(connection,"hallo welt".to_string());
+      connection.send_message("hallo welt".to_string());
     },
     None => {
       println!("connect failed.");
