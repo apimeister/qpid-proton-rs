@@ -1,5 +1,6 @@
 use c_binding::*;
 use std::ffi::CString;
+use std::ffi::CStr;
 use uuid::Uuid;
 use std::collections::HashMap;
 
@@ -160,6 +161,16 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
               proactor: proactor,
             });
             should_continue = true;
+          },
+          pn_event_type_t::PN_TRANSPORT_ERROR =>{
+            println!("PN_TRANSPORT_ERROR: something went wrong");
+            let condition = pn_transport_condition(transport);
+            let name = pn_condition_get_name(condition);
+            let name2 = CStr::from_ptr(name).to_str().unwrap();
+            let description = pn_condition_get_description(condition);
+            let description2 = CStr::from_ptr(description).to_str().unwrap();
+            println!("name: {}",name2);
+            println!("desc: {}",description2);
           },
           pn_event_type_t::PN_LINK_FLOW => {
             println!("PN_LINK_FLOW: link ready");
