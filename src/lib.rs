@@ -117,13 +117,15 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
       Some(auth) => {
         pn_transport_require_auth(transport,true);
         pn_transport_require_encryption(transport,true);
-        pn_connection_set_user(connection, CString::new(auth.username).unwrap().as_ptr());
-        pn_connection_set_password(connection, CString::new(auth.password).unwrap().as_ptr());
-        pn_connection_set_hostname(connection, CString::new(host).unwrap().as_ptr());
+        pn_connection_set_user(connection, CString::new(auth.username.clone()).unwrap().as_ptr());
+        pn_connection_set_password(connection, CString::new(auth.password.clone()).unwrap().as_ptr());
+        pn_connection_set_hostname(connection, CString::new(host.clone()).unwrap().as_ptr());
         let sasl = pn_sasl(transport);
         pn_sasl_set_allow_insecure_mechs(sasl, true);
         pn_sasl_allowed_mechs(sasl, CString::new("PLAIN").unwrap().as_ptr());
-    
+        pn_connection_set_user(connection, CString::new(auth.username).unwrap().as_ptr());
+        pn_connection_set_password(connection, CString::new(auth.password).unwrap().as_ptr());
+        pn_connection_set_hostname(connection, CString::new(host).unwrap().as_ptr());    
       },
       None => {}
     }   
