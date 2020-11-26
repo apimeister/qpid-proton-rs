@@ -4,6 +4,7 @@ use std::ffi::CStr;
 use uuid::Uuid;
 use std::collections::HashMap;
 
+use log::{info, debug,error};
 pub mod c_binding;
 
 /// Sasl Basic Auth information
@@ -46,12 +47,12 @@ impl Connection {
         let buf_vec:Vec<i8> = vec![0; buf_size];
         let buf_ref: *const std::os::raw::c_char = buf_vec.as_ptr();
         let result = pn_message_encode(message,buf_ref,&mut buf_size);
-        println!("pn_message_encode: {}",result);
-        println!("buffer size {}",buf_size);
+        info!("pn_message_encode: {}",result);
+        info!("buffer size {}",buf_size);
         let result = pn_link_send(self.link, buf_ref, buf_size);
-        println!("pn_link_send: {}",result);
+        info!("pn_link_send: {}",result);
         let result = pn_link_advance(self.link);
-        println!("pn_link_advance: {}",result);
+        info!("pn_link_advance: {}",result);
         pn_message_clear(message);
         self.wait_for(pn_event_type_t::PN_DELIVERY);
       }
@@ -77,11 +78,11 @@ impl Connection {
             // },
             _ => {
               if pn_event_type(event) == target {
-                println!("matched target {:?}",pn_event_type(event));
+                info!("matched target {:?}",pn_event_type(event));
                 should_continue = false;
                 break;  
               }else{
-                println!("{:?}",pn_event_type(event));
+                debug!("{:?}",pn_event_type(event));
               }
             }
           }
@@ -105,10 +106,13 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
     let c_addr = CString::new(addr).unwrap();
     let transport = pn_transport();
     let connection = pn_connection();
-    //enable logging
-    // let logger = pn_transport_logger(transport);
-    // pn_logger_set_mask(logger, pn_log_subsystem_t::PN_SUBSYSTEM_ALL, pn_log_level_t::PN_LEVEL_ALL);
 
+    let log_level = log::max_level();
+    if log_level == log::LevelFilter::Trace {
+      //enable logging
+      let logger = pn_transport_logger(transport);
+      pn_logger_set_mask(logger, pn_log_subsystem_t::PN_SUBSYSTEM_ALL, pn_log_level_t::PN_LEVEL_ALL);
+    }
     match auth {
       Some(auth) => {
         pn_transport_require_auth(transport,true);
@@ -137,7 +141,7 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
         //handle single event
         match pn_event_type(event) {
           pn_event_type_t::PN_CONNECTION_INIT =>{
-            println!("PN_CONNECTION_INIT: connection init");
+            info!("PN_CONNECTION_INIT: connection init");
             let c = pn_event_connection(event);
             let s = pn_session(pn_event_connection(event));
             let unqiue_id = "unique";
@@ -163,25 +167,25 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>, destination: Str
             should_continue = true;
           },
           pn_event_type_t::PN_TRANSPORT_ERROR =>{
-            println!("PN_TRANSPORT_ERROR: something went wrong");
+            error!("PN_TRANSPORT_ERROR: something went wrong");
             let condition = pn_transport_condition(transport);
             let name = pn_condition_get_name(condition);
             let name2 = CStr::from_ptr(name).to_str().unwrap();
             let description = pn_condition_get_description(condition);
             let description2 = CStr::from_ptr(description).to_str().unwrap();
-            println!("name: {}",name2);
-            println!("desc: {}",description2);
+            error!("name: {}",name2);
+            error!("desc: {}",description2);
           },
           pn_event_type_t::PN_LINK_FLOW => {
-            println!("PN_LINK_FLOW: link ready");
+            info!("PN_LINK_FLOW: link ready");
             should_continue = false;
           },
           _ => {
-            println!("{:?}",pn_event_type(event));
+            info!("{:?}",pn_event_type(event));
           }
         }
       }
-      println!("pn_proactor_done");
+      info!("pn_proactor_done");
       pn_proactor_done(proactor, events);
       if !should_continue {
         break;

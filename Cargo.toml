@@ -1,6 +1,6 @@
 [package]
 name = "qpid_proton"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Jens Walter <jens@apimeister.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -10,6 +10,7 @@ description = "Rust bindings for the Apache Qpid Proton C library."
 
 [dependencies]
 uuid = { version = "0.8", features = ["v4"] }
+log = "0.4"
 
 [build-dependencies]
 cmake = "0.1"
