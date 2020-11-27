@@ -11,8 +11,8 @@ fn main()
     .define("ENABLE_FUZZ_TESTING","OFF")
     .build();       
 
-  println!("cargo:rustc-link-search=native={}", dst.display());
-  println!("cargo:rustc-link-lib=dylib=qpid-proton");
+    println!("cargo:rustc-link-search=native={}/lib64", dst.display());
+    println!("cargo:rustc-link-lib=dylib=qpid-proton");
   println!("cargo:rustc-link-lib=dylib=qpid-proton-core");
   println!("cargo:rustc-link-lib=dylib=qpid-proton-proactor");
 }
