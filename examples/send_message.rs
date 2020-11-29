@@ -2,7 +2,7 @@ use std::os::raw::c_char;
 use std::ffi::CString;
 use std::ffi::CStr;
 use qpid_proton::*;
-use qpid_proton::c_binding::*;
+use qpid_proton_sys::*;
 
 fn main() {
   unsafe{

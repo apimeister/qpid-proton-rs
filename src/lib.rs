@@ -1,11 +1,10 @@
-use c_binding::*;
+use qpid_proton_sys::*;
 use std::ffi::CString;
 use std::ffi::CStr;
 use uuid::Uuid;
 use std::collections::HashMap;
 
 use log::{info, debug,error};
-pub mod c_binding;
 
 /// Sasl Basic Auth information
 pub struct SaslAuth {
@@ -15,10 +14,10 @@ pub struct SaslAuth {
 
 #[allow(dead_code)]
 pub struct Connection {
-  connection: *mut c_binding::pn_connection_t,
-  transport: *mut c_binding::pn_transport_t,
-  link: *mut c_binding::pn_link_t,
-  proactor: *mut c_binding::pn_proactor_t,
+  connection: *mut pn_connection_t,
+  transport: *mut pn_transport_t,
+  link: *mut pn_link_t,
+  proactor: *mut pn_proactor_t,
 }
 
 /// represents a Message
