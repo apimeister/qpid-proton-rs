@@ -11,7 +11,8 @@ description = "Rust bindings for the Apache Qpid Proton C library."
 [dependencies]
 uuid = { version = "0.8", features = ["v4"] }
 log = "0.4"
-qpid_proton-sys = "0.0.1"
+qpid_proton-sys = "0.1.8"
+env_logger = "*"
 
 [build-dependencies]
 cmake = "0.1"
