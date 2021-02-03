@@ -34,17 +34,6 @@ pub struct Message{
   pub header: Option<HashMap<String,String>>
 }
 
-use std::os::raw::c_char;
-
-#[allow(dead_code)]
-extern "C" {
-   pub fn pn_rwbytes(size: usize, start: *const c_char) -> pn_rwbytes_t;
-   pub fn pn_message_set_content_encoding(msg: *mut pn_message_t,encoding: *const c_char);
-   pub fn pn_message_data(msg: *mut pn_message_t,data: *mut pn_data_t) -> i32;
-   pub fn pn_data_type(data: *mut pn_data_t) -> pn_type_t;
-   pub fn pn_data_put_symbol	(	data: *mut pn_data_t,symbol: *mut pn_bytes_t) -> i32;
-   pub fn pn_data_put_described	(data: *mut pn_data_t) -> i32;
-}
 impl Link {
   pub fn send_message(&self, payload: String){
     unsafe{
@@ -143,17 +132,17 @@ impl Link {
                   let bytes_received = pn_link_recv(link, buf_ref, size);
                   println!("bytes_received: {}",bytes_received);
                   let message = pn_message();
-                  let status = pn_message_decode(message, buf_ref, size);
-                  if status!=0 {
-                    println!("message decoding failed");
-                    /* Print the decoded message */
-                    // pn_string_t *s = pn_string(NULL);
-                    // pn_inspect(pn_message_body(m), s);
-                    // printf("%s\n", pn_string_get(s));
-                    // pn_free(s);
-                    // pn_message_free(m);
-                    // free(data.start);
-                  }
+                  let _status = pn_message_decode(message, buf_ref, size);
+                  let msg_data = pn_message_body(message);
+                  println!("get_binary");
+                  let msg_body_bytes: *mut pn_bytes_t = pn_data_get_binary(msg_data);
+                  println!("get start");
+                  let c_body = (*msg_body_bytes).start;
+                  println!("get cstr");
+                  let c_str = CStr::from_ptr(c_body);
+                  println!("{:?}",c_str);
+                  let str_slice: &str = c_str.to_str().unwrap();
+                  let _str_buf: String = str_slice.to_owned();
                   //#define PN_ACCEPTED (0x0000000000000024)
                   pn_delivery_update(delivery, 0x0000000000000024);
                   pn_delivery_settle(delivery);  /* settle and free d */
@@ -188,7 +177,8 @@ impl Connection {
       pn_terminus_set_address(pn_link_source(link), c_amqp_address.as_ptr());
       pn_link_open(link);
       pn_link_flow(link, 1);
-      self.wait_for(pn_event_type_t::PN_LINK_FLOW);
+      // self.wait_for(pn_event_type_t::PN_LINK_FLOW);
+      self.wait_for(pn_event_type_t::PN_LINK_REMOTE_OPEN);
       Link{
         link: link,
         proactor: self.proactor,
