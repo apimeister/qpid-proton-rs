@@ -54,31 +54,19 @@ impl Link {
         let dtag = pn_dtag(counter_string.as_ptr(), 1);
         pn_delivery(self.link, dtag);
         let message = pn_message();
-        let content_type = CString::new("application/json").unwrap();
+        let content_type = CString::new("text/plain").unwrap();
         pn_message_set_content_type(message, content_type.as_ptr());
-        let body = pn_message_body(message);
         pn_message_set_inferred(message, true);
 
-        // pn_data_put_described(body);
-        // pn_data_enter(body);
-        // let descr = CString::new("string").unwrap();
-        // let val = CString::new("val").unwrap();
-        // pn_data_put_symbol(body, pn_bytes(6, descr.as_ptr()));
-        // pn_data_put_string(body, pn_bytes(3, val.as_ptr()));
-        // pn_data_exit(body);
-        // let msg = CString::new("hello").unwrap();
-        // let bytes = pn_bytes(5, msg.as_ptr());
-        // pn_data_put_string(body, bytes);
-        
-        // pn_data_put_array(body, false, qpid_proton_sys::pn_type_t::PN_BYTE);
-        // pn_data_enter(body);
-        let content = CString::new(payload.clone()).unwrap();
-        // println!("content: {:?}",content.clone().into_bytes());
-        // pn_data_encode(body, content.as_ptr(), payload.len());
-        pn_data_put_string(body, pn_bytes(payload.len(), content.as_ptr()));
-        let t = pn_data_type(body);
-        println!("data_type: {:?}",t);
-        // pn_data_exit(body);
+        let body = pn_message_body(message);
+
+        let msg_id = CString::new("123").unwrap();
+        pn_data_put_string(pn_message_id(message), pn_bytes(3,msg_id.as_ptr()));
+
+        pn_data_enter(body);
+        let payload_len = payload.len();
+        let val = CString::new(payload).unwrap();
+        pn_data_put_binary(body, pn_bytes(payload_len, val.as_ptr()));
         let mut buf_size: usize = 100;
         let buf_vec:Vec<i8> = vec![0; buf_size];
         let buf_ref: *const std::os::raw::c_char = buf_vec.as_ptr();
@@ -275,12 +263,16 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>) -> Option<Connec
       Some(auth) => {
         pn_transport_require_auth(transport,true);
         pn_transport_require_encryption(transport,true);
-        pn_connection_set_user(connection, CString::new(auth.username.clone()).unwrap().as_ptr());
-        pn_connection_set_password(connection, CString::new(auth.password.clone()).unwrap().as_ptr());
-        pn_connection_set_hostname(connection, CString::new(host.clone()).unwrap().as_ptr());
+        let c_user = CString::new(auth.username.clone()).unwrap();
+        pn_connection_set_user(connection, c_user.as_ptr());
+        let c_password = CString::new(auth.password.clone()).unwrap();
+        pn_connection_set_password(connection, c_password.as_ptr());
+        let c_hostname = CString::new(host.clone()).unwrap();
+        pn_connection_set_hostname(connection, c_hostname.as_ptr());
         let sasl = pn_sasl(transport);
         pn_sasl_set_allow_insecure_mechs(sasl, true);
-        pn_sasl_allowed_mechs(sasl, CString::new("PLAIN").unwrap().as_ptr());
+        let c_plain = CString::new("PLAIN").unwrap();
+        pn_sasl_allowed_mechs(sasl, c_plain.as_ptr());
       },
       None => {}
     }   
@@ -305,7 +297,8 @@ pub fn connect(host: String, port: u16, auth: Option<SaslAuth>) -> Option<Connec
             pn_connection_set_container(c, c_unique_id.as_ptr());
             let ssl = pn_ssl(transport);
             pn_ssl_init(ssl,std::ptr::null_mut(),std::ptr::null_mut());
-            pn_ssl_set_peer_hostname(ssl,CString::new(host3).unwrap().as_ptr());
+            let c_host = CString::new(host3).unwrap();
+            pn_ssl_set_peer_hostname(ssl,c_host.as_ptr());
             pn_connection_open(c);
             pn_session_open(s);
             result = Some(Connection{
